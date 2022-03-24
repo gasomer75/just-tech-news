@@ -50,9 +50,31 @@ router.post('/', (req, res) => {
     });
 });
 
+// POST (authenticate user by email/password)
+router.post('/login', (req, res) => {
+  // expects {email: '', password: ''}
+    User.findOne({
+      where: {
+        email: req.body.email
+      }
+    }).then(dbUserData => {
+      if (!dbUserData) {
+        res.status(400).json({ message: 'No user with that email address!' });
+        return;
+      }
+      // Verify user
+      const validPassword = dbUserData.checkPassword(req.body.password);
+      if (!validPassword) {
+        res.status(400).json({ message: 'Incorrect password!' });
+        return;
+      }
+      res.json({ user: dbUserData, message: 'You are now logged in!' });
+    });  
+  });
+
 // PUT /api/users/1
 router.put('/:id', (req, res) => {
-  // expects {username: 'Lernantino', email: 'lernantino@gmail.com', password: 'password1234'}
+  // expects {username: '', email: '', password: ''}
 
   // if req.body has exact key/value pairs to match the model, you can just use `req.body` instead
   User.update(req.body, {
@@ -86,7 +108,10 @@ router.delete('/:id', (req, res) => {
         res.status(404).json({ message: 'No user found with this id' });
         return;
       }
-      res.json(dbUserData);
+      res.json({
+        message: 'User Deleted Successfully',
+        data: dbUserData
+      });
     })
     .catch(err => {
       console.log(err);
